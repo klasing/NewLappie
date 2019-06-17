@@ -139,7 +139,6 @@ namespace ns_http_client_async {
 	//                     http_client_async
 	//***************************************************************************
 	inline int http_client_async(int argc, char** argv) {
-
 		// Check command lone arguments
 		if (argc != 4 && argc != 5) {
 			std::cerr <<

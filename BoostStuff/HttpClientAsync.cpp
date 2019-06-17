@@ -2,7 +2,6 @@
 #include "http_client_async.cpp"
 
 int main() {
-
 	char cmd[] = "http-client-async";
 	char host[] = "192.168.178.14";//"lappie";//"127.0.0.1";
 	char port[] = "8080";
