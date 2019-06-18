@@ -7,6 +7,9 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/strand.hpp>
+
+#include <boost/filesystem/fstream.hpp> // ADDED
+
 #include <cstdlib>
 #include <functional>
 #include <iostream>
@@ -39,6 +42,8 @@ namespace ns_http_client_async {
 		http::request<http::empty_body> req_;
 		http::response<http::string_body> res_;
 
+		std::string destination_ = "";
+
 	public:
 		// Objects are constructed with a strand to
 		// ensure that handlers do not execute concurrently.
@@ -51,13 +56,16 @@ namespace ns_http_client_async {
 			char const* host,
 			char const* port,
 			char const* target,
-			int version) {
+			int version,
+			char const* destination) {
 			// Set up an HTTP GET request message
 			req_.version(version);
 			req_.method(http::verb::get);
 			req_.target(target);
 			req_.set(http::field::host, host);
 			req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+
+			destination_ = destination;
 
 			// Look up the domain name
 			resolver_.async_resolve(
@@ -124,6 +132,11 @@ namespace ns_http_client_async {
 			// Write the message to standard out
 			std::cout << res_ << std::endl;
 
+			// ADDED Write the message to file stream
+			boost::filesystem::path p{ destination_ };
+			boost::filesystem::ofstream ofs{ p };
+			ofs << res_.body();
+
 			// Gracefully close the socket
 			stream_.socket().shutdown(tcp::socket::shutdown_both, ec);
 
@@ -140,24 +153,27 @@ namespace ns_http_client_async {
 	//***************************************************************************
 	inline int http_client_async(int argc, char** argv) {
 		// Check command lone arguments
-		if (argc != 4 && argc != 5) {
+		if (argc != 5 && argc != 6) {
 			std::cerr <<
 				"Usage: http-client-async <host> <port> <target> [<HTTP version: 1.0 or 1.1(default)>]\n" <<
 				"Example:\n" <<
-				"    http-client-async www.example.com 80 /\n" <<
-				"    http-client-async www.example.com 80 / 1.0";
+				"    http-client-async www.example.com 80 / /\n" <<
+				"    http-client-async www.example.com 80 / / 1.0";
 			return EXIT_FAILURE;
 		}
 		auto const host = argv[1];
 		auto const port = argv[2];
 		auto const target = argv[3];
-		int version = argc == 5 && !std::strcmp("1.0", argv[4]) ? 10 : 11;
+		auto const destination = argv[4];
+		int version = argc == 6 && !std::strcmp("1.0", argv[5]) ? 10 : 11;
 
 		// The io_context is required for all I/O
 		net::io_context ioc;
 
 		// Launch the asynchronous operation
-		std::make_shared<session>(ioc)->run(host, port, target, version);
+		// set the file name where a downloaded file is stored on the client side
+		std::make_shared<session>(ioc)->run(host, port, target, version,
+			destination);
 
 		// Run the I/O service. The call will return when
 		// the get operation is complete.
