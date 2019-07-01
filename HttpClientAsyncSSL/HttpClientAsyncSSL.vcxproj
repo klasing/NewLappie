@@ -20,11 +20,10 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{793C6246-3C9F-48DB-82C1-C3F3C294722E}</ProjectGuid>
+    <ProjectGuid>{A6C43833-F05E-48A3-9008-E56F3B195223}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>BoostStuff</RootNamespace>
+    <RootNamespace>HttpClientAsyncSSL</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>HttpClientAsync</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -92,12 +91,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Program Files\boost\boost_1_70_0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\boost\boost_1_70_0;C:\openssl\include;C:\openssl\lib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\boost\boost_1_70_0\libs;C:\Program Files\boost\boost_1_70_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Program Files\boost\boost_1_70_0\libs;C:\Program Files\boost\boost_1_70_0\stage\lib;C:\openssl\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ssleay32.lib;libeay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -154,8 +154,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="HttpClientAsync.cpp" />
-    <ClCompile Include="http_client_async.cpp" />
+    <ClCompile Include="HttpClientAsyncSSL.cpp" />
+    <ClCompile Include="http_client_async_ssl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="root_certificates_new.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

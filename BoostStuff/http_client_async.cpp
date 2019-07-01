@@ -39,6 +39,7 @@ namespace ns_http_client_async {
 		beast::tcp_stream stream_;
 		beast::flat_buffer buffer_; // (Must persist between reads)
 		http::request<http::empty_body> req_;
+		http::request<http::file_body> req_for_upload_;
 		http::response<http::string_body> res_;
 		std::string mode_ = "";
 		std::string file_target_ = "";
@@ -82,16 +83,43 @@ namespace ns_http_client_async {
 				file_target_ = file_target;
 				file_destination_ = "/" + std::string(file_destination);
 				// Set up an HTTP PUT request message
-				req_.method(http::verb::put);
-				req_.target(file_destination_);
-				req_.version(version);
-				req_.set(http::field::host, host);
-				req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-				// experimental
-				req_.set(http::field::content_type, "text/plain");
-				std::string str = "bla bla";
-				req_.set(http::field::body, str);
-				req_.prepare_payload();
+				//req_.method(http::verb::put);
+				//req_.target(file_destination_);
+				//req_.version(version);
+				//req_.set(http::field::host, host);
+				//req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+				//// experimental
+				//req_.set(http::field::content_type, "text/plain");
+				//beast::string_param string_param("bla bla bla");
+				//req_.set(http::field::body, string_param);
+				//req_.prepare_payload();
+
+				// Attempt to open the file
+				beast::error_code ec;
+				http::file_body::value_type body;
+				body.open(file_target_.c_str(), beast::file_mode::scan, ec);
+
+				// Handle the case where the file doesn't exist
+				if (ec == beast::errc::no_such_file_or_directory)
+					std::cout << file_target_.c_str() << " not found" << std::endl;
+
+				// Handle an unknown error
+				if (ec)
+					std::cout << "Error: " << ec.message() << std::endl;
+
+				// Cache the size since we need it after the move
+				auto const size = body.size();
+
+				//https://github.com/boostorg/beast/issues/1304
+				req_for_upload_.method(http::verb::put);
+				req_for_upload_.target(file_destination_);
+				req_for_upload_.version(version);
+				req_for_upload_.set(http::field::host, host);
+				req_for_upload_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+				req_for_upload_.set(http::field::content_type, "text/plain");
+				req_for_upload_.content_length(size);
+				req_for_upload_.body() = std::move(body);
+				req_for_upload_.prepare_payload();
 			}
 
 			// Look up the domain name
@@ -132,10 +160,18 @@ namespace ns_http_client_async {
 			stream_.expires_after(std::chrono::seconds(30));
 
 			// Send the HTTP request to the remote host
-			http::async_write(stream_, req_,
-				beast::bind_front_handler(
-					&session::on_write,
-					shared_from_this()));
+			if (mode_ == "download") {
+				http::async_write(stream_, req_,
+					beast::bind_front_handler(
+						&session::on_write,
+						shared_from_this()));
+			}
+			else {
+				http::async_write(stream_, req_for_upload_,
+					beast::bind_front_handler(
+						&session::on_write,
+						shared_from_this()));
+			}
 		}
 
 		void
